@@ -1,0 +1,9 @@
+NAME: Aashita Patwari
+EMAIL: harshupatwari@gmail.com
+ID: 004810708
+
+lab1b-client.c: The client program that opens a connection to a server and sends input from the keyboard to the socket + echo it on display, and displays input from the socket. Supports a mandatory --port option to specify the port number, and optional --log and --compress options to create a log file to maintain a record of the data and compress the data to reduce the space it takes up.  
+
+lab1b-server.c: The server program that will connect with the client, receive the client's commands and send them to the shell where it is processefd. It will then send the client the outputs. It also supports a mandatory --port option and an optional --compress option.
+
+Makefile: Supports default (builds both client and server executables), client (builds client), server (builds server) dist (builds tarball with README, Makefile and source files) and clean (removes all files including the tar.gz leaving only the four files) targets. 

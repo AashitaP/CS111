@@ -1,0 +1,17 @@
+NAME: Aashita Patwari
+EMAIL: harshupatwari@gmail.com
+ID: 004810708
+
+Makefile:
+
+Supports default (builds executable), dist (builds tarball with README, Makefile and source file) and clean (removes all files including the tar.gz leaving only the three files) targets. 
+
+lab1a.c: 
+
+Builds a non-canonical input mode for terminal that accepts a shell option. Without the shell option, the program simply echoes what's typed in and terminates with ^D. With the shell option, it executes a shell that processes the typed input, which echoes as it is typed, and outputs the shell output until it is terminated.
+
+Sources:
+
+https://support.sas.com/documentation/onlinedoc/sasc/doc/lr2/tsetatr.htm -- terminal setting example
+https://github.com/raoulmillais/linux-system-programming/blob/master/src/poll-example.c -- polling example
+http://tldp.org/LDP/lpg/node11.html -- piping example

@@ -1,0 +1,39 @@
+NAME: Aashita Patwari
+EMAIL: harshupatwari@gmail.com
+ID: 004810708
+SLIPDAYS: 004810708,1
+
+Description of included files:
+
+lab0.c: source file
+
+The main function of this program is to read from an input and write to an output. It takes in 4 optional arguments, if an input/output file is passed in, it reads/writes from/to it. Else it takes in from stdin and writes to stdout. The other two arguments are segfault and catch, segfault forces a segmentation fault and catch registers a handler that catches the segmentation fault.
+
+Makefile: 
+
+Consists of a default option, as well as check, clean and dist. Just running make will build the executable with -Wall and -Wextra options. make check runs the smoke-test cases described in the next section, make clean deletes all files created by the Makefile, make dist creates the tarball. 
+
+backtrace.png:
+
+Screenshot of the terminal showing the stack backtrace when the program is run with the --segfault argument under a debugger.
+
+breakpoint.png:
+
+Screenshot of the terminal when the program is run with the --segfault argument and a breakpoint set at the point where the dereferencing of a null pointer occurs. The pointer is inspected and confirmed to be NULL in 3 different ways - info locals showing the local variables, print x to print the variable x and list that shows the code around it and the statement where NULL is assigned to the pointer. 
+
+
+
+Description of test cases:
+
+wrongOptionTest - checks if the program exits with exit code 1 if an invalid option such as '--something' is passed into the program. 
+
+catchTest - checks if the program exits with exit code 4 when it is run with both the catch and segfault options, indicating that the signal handler is correctly implemented. 
+
+unreadableInputTest - checks if the program exits with exit code 2 when an unreadable input file is passed into the program. 
+
+unwritableOutputTest - checks if the program exits with exit code 3 when an unwritable output file is passed into the program. 
+
+successfulTest - checks if the program exits with exit code 0 in the end of a valid run. 
+
+copyTest - checks if the input is equal to the output and if the program exits with exit code 0 in the end of a valid run.
+
