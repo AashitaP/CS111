@@ -1,6 +1,5 @@
 #NAME: Aashita Patwari
 #EMAIL: harshupatwari@gmail.com
-#ID: 004810708 
 
 default: 
 	gcc -g -Wall -Wextra lab1a.c -o lab1a

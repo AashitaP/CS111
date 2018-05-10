@@ -1,6 +1,5 @@
 NAME: Aashita Patwari
 EMAIL: harshupatwari@gmail.com
-ID: 004810708
 
 lab1b-client.c: The client program that opens a connection to a server and sends input from the keyboard to the socket + echo it on display, and displays input from the socket. Supports a mandatory --port option to specify the port number, and optional --log and --compress options to create a log file to maintain a record of the data and compress the data to reduce the space it takes up.  
 
