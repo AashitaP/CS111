@@ -175,6 +175,139 @@ void printFreeInodes()
     }
 }
 
+int accumulator = 0;
+
+void handleBlockReferences (int off, int p_inum, int indbl1, int indbl2, int indbl3, struct ext2_inode *cur)
+{
+    __u8 *block_holder;
+    block_holder = malloc(blockSize);
+    int firstindblock = blockSize * indbl1;
+    int secindblock = blockSize * indbl2;
+    int thirdindblock = blockSize * indbl3;
+    
+    if (indbl1)
+    {
+        ssize_t nBytes = pread(fd, block_holder, blockSize, firstindblock);
+        int counter = 0;
+        
+        if (off)
+            counter = off + accumulator - 1;
+        else
+            counter = accumulator + 12;
+        
+        int i = 0;
+        while (i < blockSize)
+        {
+            if (block_holder[i] != 0)
+            {
+                printf("INDIRECT,%u,%u,%u,%u,%u\n",p_inum,1,counter,indbl1,block_holder[i]);
+                counter = counter+1;
+                
+                if (off == 0)
+                    accumulator++;
+            }
+            i++;
+        }
+    }
+    
+    if (indbl2)
+    {
+        ssize_t nBytes = pread (fd, block_holder, blockSize, secindblock);
+        int counter = 0;
+        
+        if (off)
+            counter = off;
+        else
+            counter = 268;
+        
+        int i = 0;
+        
+        while (i < blockSize)
+        {
+            if (block_holder[i] != 0)
+            {
+                printf("INDIRECT,%u,%u,%u,%u,%u\n",p_inum,2,counter,indbl2,block_holder[i]);
+                handleBlockReferences(counter, p_inum, block_holder[i], 0, 0, cur);
+                counter += 256;
+            }
+            i++;
+        }
+    }
+    
+    if (indbl3)
+    {
+        ssize_t nBytes = pread(fd, block_holder, blockSize, thirdindblock);
+        int counter = 0;
+        
+        if (off)
+            counter = off;
+        else
+            counter = 65804;
+        
+        int i = 0;
+        while (i < blockSize)
+        {
+            if (block_holder[i] != 0)
+            {
+                printf("INDIRECT,%u,%u,%u,%u,%u\n",p_inum,3,counter,indbl3,block_holder[i]);
+                handleBlockReferences(counter, p_inum, 0, block_holder[i], 0, cur);
+                counter += 65536;
+            }
+            i++;
+        }
+    }
+    
+    free(block_holder);
+}
+
+void directoryEntries (int p_inum, struct ext2_inode *pass_inode)
+{
+    int temp = pass_inode->i_blocks/(2 << superBlock.s_log_block_size);
+    int i=0;
+    
+    while (i < temp+1)
+    {
+        int inode_factor = pass_inode->i_block[i]-1;
+        if (i > 14)
+        {
+            fprintf (stderr, "An error occurred in the directoryEntries function.\n");
+            exit(1);
+        }
+        
+        char holder[blockSize];
+        ssize_t rc = pread(fd, &holder, blockSize, 1024 + (blockSize * inode_factor));
+        struct ext2_dir_entry *pointer = (struct ext2_dir_entry *)holder;
+        int cSize = 0;
+        
+        while (cSize < blockSize)
+        {
+            if (pointer->file_type)
+            {
+                char nameOfFile[pointer->name_len+1];
+                
+                int x = 0;
+                while (x < pointer->name_len)
+                {
+                    nameOfFile[x] = pointer->name[x];
+                    x++;
+                }
+                
+                nameOfFile[pointer->name_len] = 0;
+                if (pointer != NULL)
+                    printf("DIRENT,%d,%u,%u,%u,%u,'%s'\n", p_inum, cSize, pointer->inode, pointer->rec_len, pointer->name_len, nameOfFile);
+                
+                cSize += pointer->rec_len;
+                pointer = pointer->rec_len + (void*)pointer;
+            }
+            
+            else
+                break;
+        }
+        
+        i++;
+    }
+}
+
 void scanInodes()
 {
     int i;
@@ -190,7 +323,7 @@ void scanInodes()
             {
                 //symbolic 1010 regular file 1000
                 char fileType = '?';
-                if(inodeTable[j].i_mode & 0x8000)
+                if (inodeTable[j].i_mode & 0x8000)
                 {
                     if(inodeTable[j].i_mode & 0x2000)
                     {
@@ -199,11 +332,16 @@ void scanInodes()
                     else
                     {
                         fileType = 'f';
+                        struct ext2_inode *pass_inode = &inodeTable[j];
+                        handleBlockReferences (0, j+1, inodeTable[j].i_block[12], inodeTable[j].i_block[13], inodeTable[j].i_block[14], pass_inode);
                     }
                 }
-                else if(inodeTable[j].i_mode & 0x4000)
+                else if (inodeTable[j].i_mode & 0x4000)
                 {
                     fileType = 'd';
+                    struct ext2_inode *pass_inode = &inodeTable[j];
+                    handleBlockReferences (0, j+1, inodeTable[j].i_block[12], inodeTable[j].i_block[13], inodeTable[j].i_block[14], pass_inode);
+                    directoryEntries (j+1, pass_inode);
                 }
 
                 char cTime[80];
