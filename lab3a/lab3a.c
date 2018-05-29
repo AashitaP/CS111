@@ -6,6 +6,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <time.h>
+#include <string.h>
+#include <unistd.h>
 
 
 #define OFFSET = 1024; //starts from byte 1024
@@ -23,6 +25,7 @@ unsigned long* groupsNumBlocks = NULL;
 unsigned long* groupsNumInodes = NULL;
 unsigned long blockSize = 0;
 unsigned long inodeSize = 0;
+int accumulator = 0;
 
 
 void printSuper() //total number of blocks(4), inodes(0), block size (24), inode size (88), blocks per group (32), inodes per group (40), first non reserved inode (84)
@@ -63,6 +66,11 @@ void printGroupDesc() //number blocks, inodes, freeblocks, free inodes, block nu
         fprintf(stderr, "Failed to allocate memory");
     }
     ssize_t nBytes = pread(fd, groupsDesc, sizeof(struct ext2_group_desc) * numberGroups, 1024 + sizeof(struct ext2_super_block));
+    if (nBytes == -1)
+    {
+        fprintf(stderr, "Error number: %d, Error message: %s \n", errno, strerror(errno));
+        exit(1);
+    }
     unsigned long remainingBlocks = numBlocks;
     unsigned long remainingInodes = numInodes;
     for (i = 0; i < numberGroups; i++)
@@ -103,7 +111,7 @@ void printGroupDesc() //number blocks, inodes, freeblocks, free inodes, block nu
 
 void printFreeBlock()
 {
-    int i;
+    unsigned long i;
     unsigned long blockOffset = 1;
     for(i = 0; i < numberGroups; i++)
     {
@@ -111,6 +119,11 @@ void printFreeBlock()
         __u8 *bitmapBuffer = malloc(blockSize); //bitmap is one block
         unsigned long bitmap = groupsDesc[i].bg_block_bitmap;
         ssize_t nBytes = pread(fd, bitmapBuffer, blockSize, bitmap * blockSize);
+        if (nBytes == -1)
+        {
+            fprintf(stderr, "Error number: %d, Error message: %s \n", errno, strerror(errno));
+            exit(1);
+        }
         unsigned long j; 
         int mask = 0x1;
         for(j = 0; j < numberBlocks; j++)
@@ -149,6 +162,11 @@ void printFreeInodes()
         __u8 *inodeBuffer = malloc(blockSize); //bitmap is one block
         unsigned long inodemap = groupsDesc[i].bg_inode_bitmap;
         ssize_t nBytes = pread(fd, inodeBuffer, blockSize, inodemap * blockSize);
+        if (nBytes == -1)
+        {
+            fprintf(stderr, "Error number: %d, Error message: %s \n", errno, strerror(errno));
+            exit(1);
+        }
         unsigned long j; 
         int mask = 0x1;
         for(j = 0; j < numberInodes; j++)
@@ -175,7 +193,6 @@ void printFreeInodes()
     }
 }
 
-int accumulator = 0;
 
 void handleBlockReferences (int off, int p_inum, int indbl1, int indbl2, int indbl3, struct ext2_inode *cur)
 {
@@ -188,7 +205,12 @@ void handleBlockReferences (int off, int p_inum, int indbl1, int indbl2, int ind
     if (indbl1)
     {
         ssize_t nBytes = pread(fd, block_holder, blockSize, firstindblock);
-        int counter = 0;
+        if (nBytes == -1)
+        {
+            fprintf(stderr, "Error number: %d, Error message: %s \n", errno, strerror(errno));
+            exit(1);
+        }
+        unsigned long counter = 0;
         
         if (off)
             counter = off + accumulator - 1;
@@ -213,6 +235,11 @@ void handleBlockReferences (int off, int p_inum, int indbl1, int indbl2, int ind
     if (indbl2)
     {
         ssize_t nBytes = pread (fd, block_holder, blockSize, secindblock);
+        if (nBytes == -1)
+        {
+            fprintf(stderr, "Error number: %d, Error message: %s \n", errno, strerror(errno));
+            exit(1);
+        }
         int counter = 0;
         
         if (off)
@@ -237,6 +264,11 @@ void handleBlockReferences (int off, int p_inum, int indbl1, int indbl2, int ind
     if (indbl3)
     {
         ssize_t nBytes = pread(fd, block_holder, blockSize, thirdindblock);
+        if (nBytes == -1)
+        {
+            fprintf(stderr, "Error number: %d, Error message: %s \n", errno, strerror(errno));
+            exit(1);
+        }
         int counter = 0;
         
         if (off)
@@ -316,6 +348,11 @@ void scanInodes()
     {
         inodeTable = malloc(tableSize);
         ssize_t nBytes = pread(fd, inodeTable, tableSize, blockSize * groupsDesc[i].bg_inode_table);
+        if (nBytes == -1)
+        {
+            fprintf(stderr, "Error number: %d, Error message: %s \n", errno, strerror(errno));
+            exit(1);
+        }
         int j;
         for(j = 0; j < inodesPG; j++)
         {
@@ -357,8 +394,13 @@ void scanInodes()
                 ts = *gmtime(&a_seconds);
                 strftime(aTime, 80,"%m/%d/%y %H:%M:%S", &ts);
 
+                time_t c_seconds = inodeTable[j].i_ctime;
+                ts = *gmtime(&c_seconds);
+                strftime(cTime, 80,"%m/%d/%y %H:%M:%S", &ts);
 
-                printf("INODE,%lu,%c,%o,%lu,%lu,%lu,%s,%s,%s,%lu,%lu", j + 1,fileType,(inodeTable[j].i_mode) & 0xFFF,inodeTable[j].i_uid,inodeTable[j].i_gid,inodeTable[j].i_links_count, mTime, mTime, aTime, inodeTable[j].i_size, inodeTable[j].i_blocks);
+
+
+                printf("INODE,%lu,%c,%o,%lu,%lu,%lu,%s,%s,%s,%lu,%lu", j + 1,fileType,(inodeTable[j].i_mode) & 0xFFF,inodeTable[j].i_uid,inodeTable[j].i_gid,inodeTable[j].i_links_count, cTime, mTime, aTime, inodeTable[j].i_size, inodeTable[j].i_blocks);
 
                 if(fileType == 's')
                 {
@@ -378,7 +420,7 @@ int main(int argc, char *argv[])
 {
     if(argc != 2)
     {
-        fprintf(stderr, "Require one argument - an image file");
+        fprintf(stderr, "Usage: Require one argument - an image file");
         exit(1);
     }
 
@@ -388,7 +430,7 @@ int main(int argc, char *argv[])
 
     if(fd == -1)
     {
-        fprintf(stderr, "Error number: %d, Error message: %s \n", errno, strerror(errno));
+        fprintf(stderr, "Error opening image");
         exit(1);
     }
 
@@ -397,6 +439,8 @@ int main(int argc, char *argv[])
     printFreeBlock();
     printFreeInodes();
     scanInodes();
+
+    exit(0);
 
 
 }
