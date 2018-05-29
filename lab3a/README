@@ -1,0 +1,16 @@
+NAME: Divij Ohri
+UID: 404821856
+EMAIL: divijohri28@gmail.com
+
+main.c:
+contains the source code used for the project used, 
+
+Makefile:
+this contains the script that we used to build the code, to clean (remove), and also to make a tar file with it.
+
+README:
+this file that contains the information about the files and the sources used.
+
+resources:
+http://www.nongnu.org/ext2-doc/ext2.html#BG-BLOCK-BITMAP
+http://cs.smith.edu/~nhowe/262/oldlabs/ext2.html
