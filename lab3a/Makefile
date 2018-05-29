@@ -1,6 +1,6 @@
-# NAME: Divij Ohri
-# EMAIL: divijohri28@gmail.com
-# ID: 404821856 
+# NAME: Divij Ohri, Aashita Patwari
+# EMAIL: divijohri28@gmail.com, harshupatwari@gmail.com
+# ID: 404821856, 004810708
 
 CC=gcc
 CFLAGS=-g -Wall -Wextra -std=gnu99
@@ -16,4 +16,4 @@ clean:
 
 # Build the distribution tarball
 dist: 
-	tar -cvzf lab3a-404821856.tar.gz lab3a.c Makefile README ext2_fs.h
+	tar -cvzf lab3a-004810708.tar.gz lab3a.c Makefile README ext2_fs.h

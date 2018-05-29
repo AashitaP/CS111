@@ -1,3 +1,8 @@
+//NAME: Divij Ohri, Aashita Patwari
+//EMAIL: divijohri28@gmail.com, harshupatwari@gmail.com
+//ID: 404821856, 004810708
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -105,13 +110,13 @@ void printGroupDesc() //number blocks, inodes, freeblocks, free inodes, block nu
         unsigned long inodemap = groupsDesc[i].bg_inode_bitmap;
         unsigned long firstInode = groupsDesc[i].bg_inode_table;	
 
-            printf("GROUP,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu\n", i, numberBlocks, numberInodes,freeBlocks,freeInodes,bitmap, inodemap, firstInode);
+            printf("GROUP,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu\n", (unsigned long) i, numberBlocks, numberInodes,freeBlocks,freeInodes,bitmap, inodemap, firstInode);
     }
 }
 
 void printFreeBlock()
 {
-    unsigned long i;
+    int i;
     unsigned long blockOffset = 1;
     for(i = 0; i < numberGroups; i++)
     {
@@ -167,27 +172,27 @@ void printFreeInodes()
             fprintf(stderr, "Error number: %d, Error message: %s \n", errno, strerror(errno));
             exit(1);
         }
-        unsigned long j; 
+        int j; 
         int mask = 0x1;
         for(j = 0; j < numberInodes; j++)
         {
             __u8 byte = inodeBuffer[j/8];
             if((j % 8) == 0 && (byte & mask) == 0)
-                printf("IFREE,%lu\n", j+1);
+                printf("IFREE,%lu\n", (unsigned long) j+1);
             else if((j % 8) == 1 && (byte & (mask << 1)) == 0)
-                printf("IFREE,%lu\n", j+1);
+                printf("IFREE,%lu\n", (unsigned long) j+1);
             else if((j % 8) == 2 && (byte & (mask << 2)) == 0)
-                printf("IFREE,%lu\n", j+1);
+                printf("IFREE,%lu\n", (unsigned long) j+1);
             else if((j % 8) == 3 && (byte & (mask << 3)) == 0)
-                printf("IFREE,%lu\n", j+1);
+                printf("IFREE,%lu\n", (unsigned long) j+1);
             else if((j % 8) == 4 && (byte & (mask << 4)) == 0)
-                printf("IFREE,%lu\n", j+1);
+                printf("IFREE,%lu\n", (unsigned long) j+1);
             else if((j % 8) == 5 && (byte & (mask << 5)) == 0)
-                printf("IFREE,%lu\n", j+1);
+                printf("IFREE,%lu\n", (unsigned long) j+1);
             else if((j % 8) == 6 && (byte & (mask << 6)) == 0)
-                printf("IFREE,%lu\n", j+1);
+                printf("IFREE,%lu\n", (unsigned long) j+1);
             else if((j % 8) == 7 && (byte & (mask << 7)) == 0)
-                printf("IFREE,%lu\n", j+1);
+                printf("IFREE,%lu\n", (unsigned long) j+1);
         } 
         blockOffset += numberBlocks;
     }
@@ -222,7 +227,7 @@ void handleBlockReferences (int off, int p_inum, int indbl1, int indbl2, int ind
         {
             if (block_holder[i] != 0)
             {
-                printf("INDIRECT,%u,%u,%u,%u,%u\n",p_inum,1,counter,indbl1,block_holder[i]);
+                printf("INDIRECT,%lu,%lu,%lu,%lu,%lu\n",(unsigned long) p_inum,(unsigned long)1,counter,(unsigned long)indbl1, (unsigned long)block_holder[i]);
                 counter = counter+1;
                 
                 if (off == 0)
@@ -240,7 +245,7 @@ void handleBlockReferences (int off, int p_inum, int indbl1, int indbl2, int ind
             fprintf(stderr, "Error number: %d, Error message: %s \n", errno, strerror(errno));
             exit(1);
         }
-        int counter = 0;
+        unsigned long counter = 0;
         
         if (off)
             counter = off;
@@ -253,7 +258,7 @@ void handleBlockReferences (int off, int p_inum, int indbl1, int indbl2, int ind
         {
             if (block_holder[i] != 0)
             {
-                printf("INDIRECT,%u,%u,%u,%u,%u\n",p_inum,2,counter,indbl2,block_holder[i]);
+                printf("INDIRECT,%lu,%lu,%lu,%lu,%lu\n",(unsigned long)p_inum, (unsigned long)2,counter,(unsigned long)indbl2, (unsigned long)block_holder[i]);
                 handleBlockReferences(counter, p_inum, block_holder[i], 0, 0, cur);
                 counter += 256;
             }
@@ -269,7 +274,7 @@ void handleBlockReferences (int off, int p_inum, int indbl1, int indbl2, int ind
             fprintf(stderr, "Error number: %d, Error message: %s \n", errno, strerror(errno));
             exit(1);
         }
-        int counter = 0;
+        unsigned long counter = 0;
         
         if (off)
             counter = off;
@@ -281,7 +286,7 @@ void handleBlockReferences (int off, int p_inum, int indbl1, int indbl2, int ind
         {
             if (block_holder[i] != 0)
             {
-                printf("INDIRECT,%u,%u,%u,%u,%u\n",p_inum,3,counter,indbl3,block_holder[i]);
+                printf("INDIRECT,%lu,%lu,%lu,%lu,%lu\n",(unsigned long)p_inum,(unsigned long)3,counter, (unsigned long)indbl3, (unsigned long)block_holder[i]);
                 handleBlockReferences(counter, p_inum, 0, block_holder[i], 0, cur);
                 counter += 65536;
             }
@@ -307,7 +312,12 @@ void directoryEntries (int p_inum, struct ext2_inode *pass_inode)
         }
         
         char holder[blockSize];
-        ssize_t rc = pread(fd, &holder, blockSize, 1024 + (blockSize * inode_factor));
+        ssize_t nBytes = pread(fd, &holder, blockSize, 1024 + (blockSize * inode_factor));
+        if (nBytes == -1)
+        {
+            fprintf(stderr, "Error number: %d, Error message: %s \n", errno, strerror(errno));
+            exit(1);
+        }
         struct ext2_dir_entry *pointer = (struct ext2_dir_entry *)holder;
         int cSize = 0;
         
@@ -326,7 +336,7 @@ void directoryEntries (int p_inum, struct ext2_inode *pass_inode)
                 
                 nameOfFile[pointer->name_len] = 0;
                 if (pointer != NULL)
-                    printf("DIRENT,%d,%u,%u,%u,%u,'%s'\n", p_inum, cSize, pointer->inode, pointer->rec_len, pointer->name_len, nameOfFile);
+                    printf("DIRENT,%lu,%lu,%lu,%lu,%lu,'%s'\n", (unsigned long) p_inum, (unsigned long) cSize, (unsigned long) pointer->inode, (unsigned long) pointer->rec_len,(unsigned long) pointer->name_len, nameOfFile);
                 
                 cSize += pointer->rec_len;
                 pointer = pointer->rec_len + (void*)pointer;
@@ -400,14 +410,14 @@ void scanInodes()
 
 
 
-                printf("INODE,%lu,%c,%o,%lu,%lu,%lu,%s,%s,%s,%lu,%lu", j + 1,fileType,(inodeTable[j].i_mode) & 0xFFF,inodeTable[j].i_uid,inodeTable[j].i_gid,inodeTable[j].i_links_count, cTime, mTime, aTime, inodeTable[j].i_size, inodeTable[j].i_blocks);
+                printf("INODE,%lu,%c,%o,%lu,%lu,%lu,%s,%s,%s,%lu,%lu", (unsigned long) j + 1,fileType,(inodeTable[j].i_mode) & 0xFFF,(unsigned long) inodeTable[j].i_uid, (unsigned long) inodeTable[j].i_gid, (unsigned long) inodeTable[j].i_links_count, cTime, mTime, aTime, (unsigned long) inodeTable[j].i_size,(unsigned long) inodeTable[j].i_blocks);
 
                 if(fileType == 's')
                 {
-                    printf(",%lu\n", inodeTable[j].i_block[0]);
+                    printf(",%lu\n", (unsigned long) inodeTable[j].i_block[0]);
                 }
                 else
-                    printf(",%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu\n",inodeTable[j].i_block[0],inodeTable[j].i_block[1],inodeTable[j].i_block[2],inodeTable[j].i_block[3], inodeTable[j].i_block[4], inodeTable[j].i_block[5], inodeTable[j].i_block[6], inodeTable[j].i_block[7], inodeTable[j].i_block[8], inodeTable[j].i_block[9], inodeTable[j].i_block[10], inodeTable[j].i_block[11], inodeTable[j].i_block[12], inodeTable[j].i_block[13], inodeTable[j].i_block[14]);
+                    printf(",%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu\n",(unsigned long) inodeTable[j].i_block[0], (unsigned long) inodeTable[j].i_block[1], (unsigned long) inodeTable[j].i_block[2],(unsigned long) inodeTable[j].i_block[3],(unsigned long) inodeTable[j].i_block[4],(unsigned long) inodeTable[j].i_block[5],(unsigned long) inodeTable[j].i_block[6], (unsigned long) inodeTable[j].i_block[7],(unsigned long) inodeTable[j].i_block[8], (unsigned long) inodeTable[j].i_block[9],(unsigned long) inodeTable[j].i_block[10],(unsigned long) inodeTable[j].i_block[11],(unsigned long) inodeTable[j].i_block[12],(unsigned long) inodeTable[j].i_block[13],(unsigned long) inodeTable[j].i_block[14]);
             }
 
         }
