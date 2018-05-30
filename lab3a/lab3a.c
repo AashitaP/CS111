@@ -174,7 +174,9 @@ void printFreeInodes()
         }
         int j; 
         int mask = 0x1;
-        for(j = 0; j < numberInodes; j++)
+        int i_ninodes = (int) numberInodes;
+        
+        for(j = 0; j < i_ninodes; j++)
         {
             __u8 byte = inodeBuffer[j/8];
             if((j % 8) == 0 && (byte & mask) == 0)
@@ -223,7 +225,9 @@ void handleBlockReferences (int off, int p_inum, int indbl1, int indbl2, int ind
             counter = accumulator + 12;
         
         int i = 0;
-        while (i < blockSize)
+        int i_bs = (int) blockSize;
+        
+        while (i < i_bs)
         {
             if (block_holder[i] != 0)
             {
@@ -253,8 +257,9 @@ void handleBlockReferences (int off, int p_inum, int indbl1, int indbl2, int ind
             counter = 268;
         
         int i = 0;
+        int i_bs = (int) blockSize;
         
-        while (i < blockSize)
+        while (i < i_bs)
         {
             if (block_holder[i] != 0)
             {
@@ -282,7 +287,9 @@ void handleBlockReferences (int off, int p_inum, int indbl1, int indbl2, int ind
             counter = 65804;
         
         int i = 0;
-        while (i < blockSize)
+        int i_bs = (int) blockSize;
+        
+        while (i < i_bs)
         {
             if (block_holder[i] != 0)
             {
@@ -320,8 +327,9 @@ void directoryEntries (int p_inum, struct ext2_inode *pass_inode)
         }
         struct ext2_dir_entry *pointer = (struct ext2_dir_entry *)holder;
         int cSize = 0;
+        int i_bs = (int) blockSize;
         
-        while (cSize < blockSize)
+        while (cSize < i_bs)
         {
             if (pointer->file_type)
             {
@@ -364,7 +372,9 @@ void scanInodes()
             exit(1);
         }
         int j;
-        for(j = 0; j < inodesPG; j++)
+        int i_pg = (int) inodesPG;
+        
+        for(j = 0; j < i_pg; j++)
         {
             if(inodeTable[j].i_mode != 0 && inodeTable[j].i_links_count != 0)
             {
