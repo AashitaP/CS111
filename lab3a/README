@@ -3,15 +3,21 @@ EMAIL: divijohri28@gmail.com, harshupatwari@gmail.com
 ID: 404821856, 004810708
 SLIPDAYS: 1
 
-main.c:
-contains the source code used for the project used, 
+lab3a.c:-
 
-Makefile:
-this contains the script that we used to build the code, to clean (remove), and also to make a tar file with it.
+This C file contains the main source code used for the project.
 
-README:
-this file that contains the information about the files and the sources used.
+Makefile:-
 
-resources:
-http://www.nongnu.org/ext2-doc/ext2.html#BG-BLOCK-BITMAP
-http://cs.smith.edu/~nhowe/262/oldlabs/ext2.html
+The available targets are: make, clean and dist. It contains the script that we used to build the code, to clean files, and also to make a tar file with it.
+
+README:-
+
+this file that contains the information about the files and the sources used for project 3a of CS 111.
+
+Resources used:- 
+
+http://man7.org/linux/man-pages/man8/debugfs.8.html
+http://man7.org/linux/man-pages/man2/pread.2.html
+http://web.cs.ucla.edu/classes/spring18/cs111/projects/ext2_fs.h
+http://www.nongnu.org/ext2-doc/ext2.html
