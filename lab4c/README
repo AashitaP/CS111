@@ -1,0 +1,15 @@
+NAME: Aashita Patwari
+EMAIL: harshupatwari@gmail.com
+SLIPDAYS: 2
+
+
+Included fles:
+
+lab4c_tcp.c:  source file to communicate with the tcp server
+
+lab4c_tls.c: source file to communicate with the tls server, uses open ssl library for session encryption
+
+Makefile:  to build and test, includes default (builds both versions with -Wall -Wextra options), clean (delete all programs and output created by the Makefile) and dist (create the deliverable tarball) targets.
+
+
+References: https://wiki.openssl.org/index.php/SSL/TLS_Client

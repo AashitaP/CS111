@@ -1,0 +1,15 @@
+NAME: Aashita Patwari, Divij Ohri
+EMAIL: harshupatwari@gmail.com, divijohri28@gmail.com
+SLIPDAYS: 1
+
+lab3b.py:-
+The source code for the 3b project. Written in Python, our code does the job of examining, interpreting and processing information in complex binary data structures.
+
+Makefile:-
+The regular makefile to build the program. Available targets are build, clean, dist
+
+README:-
+The file your are currently reading.
+
+Resources used:-
+https://docs.python.org/3/tutorial/index.html

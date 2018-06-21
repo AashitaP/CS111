@@ -1,0 +1,187 @@
+Total: 1175 samples
+     953  81.1%  81.1%     1175 100.0% insertAndDelete
+     172  14.6%  95.7%      172  14.6% __strcmp_sse42
+      23   2.0%  97.7%      113   9.6% SortedList_insert
+      19   1.6%  99.3%      105   8.9% SortedList_lookup
+       4   0.3%  99.7%        4   0.3% _init
+       2   0.2%  99.8%        2   0.2% hash
+       1   0.1%  99.9%        1   0.1% 0x00007ffc83b876f5
+       1   0.1% 100.0%        1   0.1% 0x00007ffc83b878f4
+       0   0.0% 100.0%        2   0.2% __GI___clock_gettime
+       0   0.0% 100.0%     1175 100.0% __clone
+       0   0.0% 100.0%     1175 100.0% start_thread
+ROUTINE ====================== insertAndDelete in /u/eng/class/classaas/lab2b/lab2_list.c
+   953   1175 Total samples (flat / cumulative)
+     .      .   45: 		exit(2);
+     .      .   46: 	}
+     .      .   47: } 
+     .      .   48: 
+     .      .   49: void * insertAndDelete(void* element)
+---
+     .      .   50: {
+     .      .   51: 	SortedListElement_t * startingElement = (SortedListElement_t *) element;
+     .      .   52: 	long long threadTime = 0;
+     .      .   53: //	int threadNumber = *((int *)i); //if e.g. 10 iterations, 3rd thread
+     .      .   54: //	printf("threadNumber: %d \n", threadNumber);
+     .      .   55: //	int index = threadNumber * numberIter;  //position 20 is where we resume adding elements
+     .      .   56: //	printf("index: %d \n", index);
+     .      .   57: 	//printf("%d \n", sizeof(startingElement));
+     .      .   58: 	//printf("inserting elements");
+     .      .   59: 	for(int j = 0; j < numberIter; j++) //insert elements
+     .      .   60: 	{
+     .      .   61: 		struct timespec startLock, endLock;
+     .      1   62: 		int hashValue = hash(startingElement[j].key); //get hash value for each element
+     .      .   63: 		if(syncOption == 'm') //need to get lock acquisition time
+     .      .   64: 		{
+     .      .   65: 			clock_gettime(CLOCK_REALTIME, &startLock);
+     .      .   66: 			pthread_mutex_lock(&lockArray[hashValue]); //same hash value can be used to index into array of synchronizing objects, a lock for each sub list
+     .      .   67: 			clock_gettime(CLOCK_REALTIME, &endLock);
+     .      .   68: 			SortedList_insert(listHeads[hashValue], startingElement + j); //adding that particular element to sublist corresponding to hash value
+     .      .   69: 			//index++;
+     .      .   70: 			threadTime += (endLock.tv_sec - startLock.tv_sec) * BILLION + (endLock.tv_nsec - startLock.tv_nsec);
+     .      .   71: 			pthread_mutex_unlock(&lockArray[hashValue]);
+     .      .   72: 		}
+     .      .   73: 
+     .      .   74: 		else if(syncOption == 's')
+     .      .   75: 		{
+     .      .   76: 			//lock get time 
+     .      .   77: 			clock_gettime(CLOCK_REALTIME, &startLock);
+   468    468   78: 			while(__sync_lock_test_and_set(&lockTests[hashValue], 1) == 1)
+     .      .   79: 				;
+     .      .   80: 			//lock end time
+     .      2   81: 			clock_gettime(CLOCK_REALTIME, &endLock);
+     .    113   82: 			SortedList_insert(listHeads[hashValue], startingElement + j);
+     .      .   83: 			threadTime += (endLock.tv_sec - startLock.tv_sec) * BILLION + (endLock.tv_nsec - startLock.tv_nsec);
+     .      .   84: 			__sync_lock_release(&lockTests[hashValue]);
+     .      .   85: 		}
+     .      .   86: 
+     .      .   87: 		else
+     .      .   88: 		{
+     .      .   89: 			SortedList_insert(listHeads[hashValue], startingElement + j);
+     .      .   90: 			//index++;
+     .      .   91: 		}
+     .      .   92: 	}
+     .      .   93: 	int length = 0; //lookup length
+     .      .   94: 	int lengthSublist;
+     .      .   95: 
+     .      .   96: 	for(int i = 0; i < numberLists; i++)
+     .      .   97: 	{
+     .      .   98: 		struct timespec startLock, endLock;
+     .      .   99: 		if(syncOption == 'm')	
+     .      .  100: 		{
+     .      .  101: 			clock_gettime(CLOCK_REALTIME, &startLock);
+     .      .  102: 			pthread_mutex_lock(&lockArray[i]);
+     .      .  103: 			clock_gettime(CLOCK_REALTIME, &endLock);
+     .      .  104: 			lengthSublist = SortedList_length(listHeads[i]);
+     .      .  105: 			if(lengthSublist == -1)
+     .      .  106: 			{
+     .      .  107: 				fprintf(stderr, "Error getting list length, pointers do not align\n");
+     .      .  108: 				exit(2);
+     .      .  109: 			}
+     .      .  110: 			length += lengthSublist;
+     .      .  111: 			threadTime += (endLock.tv_sec - startLock.tv_sec) * BILLION + (endLock.tv_nsec - startLock.tv_nsec);
+     .      .  112: 			pthread_mutex_unlock(&lockArray[i]);
+     .      .  113: 		}
+     .      .  114: 
+     .      .  115: 		else if(syncOption == 's')
+     .      .  116: 		{
+     .      .  117: 			clock_gettime(CLOCK_REALTIME, &startLock);
+     1      1  118: 			while(__sync_lock_test_and_set(&lockTests[i], 1))
+     .      .  119: 			;
+     .      .  120: 			clock_gettime(CLOCK_REALTIME, &endLock);
+     .      .  121: 			lengthSublist = SortedList_length(listHeads[i]);
+     .      .  122: 			if(lengthSublist == -1)
+     .      .  123: 			{
+     .      .  124: 				fprintf(stderr, "Error getting list length, pointers do not align\n");
+     .      .  125: 				exit(2);
+     .      .  126: 			}
+     .      .  127: 			length += lengthSublist;
+     .      .  128: 			threadTime += (endLock.tv_sec - startLock.tv_sec) * BILLION + (endLock.tv_nsec - startLock.tv_nsec);
+     .      .  129: 			__sync_lock_release(&lockTests[i]);
+     .      .  130: 		}
+     .      .  131: 
+     .      .  132: 		else
+     .      .  133: 		{
+     .      .  134: 			lengthSublist = SortedList_length(listHeads[i]);
+     .      .  135: 			if(lengthSublist == -1)
+     .      .  136: 			{
+     .      .  137: 				fprintf(stderr, "Error getting list length, pointers do not align\n");
+     .      .  138: 				exit(2);
+     .      .  139: 			}
+     .      .  140: 			length += lengthSublist;
+     .      .  141: 		}
+     .      .  142: 	}
+     .      .  143: 
+     .      .  144: //	index = threadNumber * numberIter; //reset index
+     .      .  145: 
+     .      .  146: 	//printf("deleting elements");
+     .      .  147: 
+     .      .  148: 	for(int j = 0; j < numberIter; j++) 		//lookup element and delete
+     .      .  149: 	{
+     .      .  150: 		struct timespec startLock, endLock;
+     .      1  151: 		int hashValue = hash(startingElement[j].key);
+     .      .  152: 		if(syncOption == 'm')
+     .      .  153: 		{
+     .      .  154: 			clock_gettime(CLOCK_REALTIME, &startLock);
+     .      .  155: 			pthread_mutex_lock(&lockArray[hashValue]);
+     .      .  156: 			clock_gettime(CLOCK_REALTIME, &endLock);
+     .      .  157: 			threadTime += (endLock.tv_sec - startLock.tv_sec) * BILLION + (endLock.tv_nsec - startLock.tv_nsec);
+     .      .  158: 			SortedListElement_t* toDelete = SortedList_lookup(listHeads[hashValue], startingElement[j].key);
+     .      .  159: 			if(toDelete == NULL)
+     .      .  160: 			{
+     .      .  161: 				fprintf(stderr, "Error finding element \n");
+     .      .  162: 				exit(2);
+     .      .  163: 			}
+     .      .  164: 			if(SortedList_delete(toDelete) == 1)
+     .      .  165: 			{
+     .      .  166: 				fprintf(stderr, "Error deleting elements from list, pointers do not align \n");
+     .      .  167: 				exit(2);
+     .      .  168: 			}
+     .      .  169: 			pthread_mutex_unlock(&lockArray[hashValue]);
+     .      .  170: 		}
+     .      .  171: 
+     .      .  172: 		else if(syncOption == 's')
+     .      .  173: 		{
+     .      .  174: 			clock_gettime(CLOCK_REALTIME, &startLock);
+   484    484  175: 			while(__sync_lock_test_and_set(&lockTests[hashValue], 1))
+     .      .  176: 				;
+     .      .  177: 			clock_gettime(CLOCK_REALTIME, &endLock);
+     .      .  178: 			threadTime += (endLock.tv_sec - startLock.tv_sec) * BILLION + (endLock.tv_nsec - startLock.tv_nsec);
+     .    105  179: 			SortedListElement_t* toDelete = SortedList_lookup(listHeads[hashValue], startingElement[j].key);
+     .      .  180: 			if(toDelete == NULL)
+     .      .  181: 			{
+     .      .  182: 				fprintf(stderr, "Error finding element \n");
+     .      .  183: 				exit(2);
+     .      .  184: 			}
+     .      .  185: 			if(SortedList_delete(toDelete) == 1)
+     .      .  186: 			{
+     .      .  187: 				fprintf(stderr, "Error deleting elements from list, pointers do not align \n");
+     .      .  188: 				exit(2);
+     .      .  189: 			}
+     .      .  190: 
+     .      .  191: 			__sync_lock_release(&lockTests[hashValue]);
+     .      .  192: 		}
+     .      .  193: 
+     .      .  194: 		else
+     .      .  195: 		{
+     .      .  196: 			SortedListElement_t* toDelete = SortedList_lookup(listHeads[hashValue], startingElement[j].key);
+     .      .  197: 			if(toDelete == NULL)
+     .      .  198: 			{
+     .      .  199: 				fprintf(stderr, "Error finding element \n");
+     .      .  200: 				exit(2);
+     .      .  201: 			}
+     .      .  202: 			if(SortedList_delete(toDelete) == 1)
+     .      .  203: 			{
+     .      .  204: 				fprintf(stderr, "Error deleting elements from list, pointers do not align \n");
+     .      .  205: 				exit(2);
+     .      .  206: 			}
+     .      .  207: 			//index++;
+     .      .  208: 		}
+     .      .  209: 	}
+     .      .  210: 	pthread_exit(&threadTime);
+---
+     .      .  211: }
+     .      .  212: 
+     .      .  213: void generateRandomKeys(int count)
+     .      .  214: {
+     .      .  215: 	elements = (SortedListElement_t *) malloc(count * sizeof(SortedListElement_t));
